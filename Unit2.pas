@@ -1,0 +1,104 @@
+unit Unit1;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, StdCtrls,WinSock,   ScktComp,   CheckLst;
+ const 
+  MAX_ADAPTER_NAME_LENGTH = 256;
+  MAX_ADAPTER_DESCRIPTION_LENGTH = 128;
+  MAX_ADAPTER_ADDRESS_LENGTH = 8;
+type
+  TIP_ADDRESS_STRING = record
+    IPstring: array [0..15] of Char;
+  end;
+  PIP_ADDRESS_STRING = ^TIP_ADDRESS_STRING;
+  TIP_MASK_STRING = TIP_ADDRESS_STRING;
+  PIP_MASK_STRING = ^TIP_MASK_STRING;
+
+  PIP_ADDR_STRING = ^TIP_ADDR_STRING;
+  TIP_ADDR_STRING = record
+    Next: PIP_ADDR_STRING;
+    IpAddress: TIP_ADDRESS_STRING;
+    IpMask: TIP_MASK_STRING;
+    Context:DWORD;
+  end;
+
+  PIP_ADAPTER_INFO = ^TIP_ADAPTER_INFO;
+  TIP_ADAPTER_INFO = packed record
+    Next: PIP_ADAPTER_INFO;
+    ComboIndex: DWORD;
+    AdapterName: array [0..MAX_ADAPTER_NAME_LENGTH + 4-1] of Char;
+    Description: array [0..MAX_ADAPTER_DESCRIPTION_LENGTH + 4-1] of Char;
+    AddressLength: UINT;
+    Address: array [0..MAX_ADAPTER_ADDRESS_LENGTH-1] of BYTE;
+    Index: DWORD;
+    dwType: UINT;
+    DhcpEnabled: UINT;
+    CurrentIpAddress: PIP_ADDR_STRING;
+    IpAddressList: TIP_ADDR_STRING;
+    GatewayList: TIP_ADDR_STRING;
+    DhcpServer: TIP_ADDR_STRING;
+    HaveWins: BOOL;
+    PrimaryWinsServer: TIP_ADDR_STRING;
+    SecondaryWinsServer: TIP_ADDR_STRING;
+  end;
+  ///////////////
+  TForm1 = class(TForm)
+    Button1: TButton;
+    function   GetipFangshi:Boolean;
+    procedure Button1Click(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  Form1: TForm1;
+
+implementation
+function   GetAdaptersInfo(pAdapterInfo: PIP_ADAPTER_INFO;
+                pOutBufLen: PDWORD): DWORD; stdcall;
+                external 'IPHLPAPI.DLL' name 'GetAdaptersInfo';
+{$R *.dfm}
+function TForm1.GetipFangshi:Boolean;
+
+var
+  pbuf:PIP_ADAPTER_INFO;
+  buflen:DWORD;
+  i:   integer;
+begin
+  buflen:= 0;
+  if GetAdaptersInfo(pbuf, @bufLen) = ERROR_BUFFER_OVERFLOW then
+  begin
+    pbuf:= AllocMem(buflen);
+    if GetAdaptersInfo(pbuf, @bufLen) = ERROR_SUCCESS then
+    while pbuf <> nil do
+    begin
+      //showmessage( IntToStr( pbuf.DhcpEnabled ) );//1动态分配
+      if  pbuf.DhcpEnabled=1 then
+      Result:=False else
+      Result:=True;
+      pbuf   :=   pbuf.Next;
+    end;
+    FreeMem(pbuf);
+  end;
+end;
+  function test:string;
+  begin
+Result:='
+[zjnbjsq]3CBB208C8231A122BCFE6C0A55C31E9E6E2FBB0BA34398B33AE82E491058879F4CD5270C1DBEE111D67F9BA78F815CB5258BDB15AAC3C01E8350CEBDAEC94C74E80D1F9D233AE4140638F4D41B764C75D6A2D7ACB2FFF167CD1FF6DB4CCB76DDBBC98DBAA1BBA3F3252FC7E310D8D153EC80F07B9F01A61A495F6616075C54D185B0CBD8EE663AF7D64FE192BF56FFBE95E644F46E8BC108DC746438E8E585F14EC488140C7EF2406B6695549E720A519E96A90B7179B021EDB8EBB29D8986690CCBB83D86F51E44AC400A7421EF29B10470A0DE10C9937D865ADD99B9F87F817D52C45E62C5C46852B9706753DA89E9F1F677C5375F1488307A2F1B834946484FDE13F8E1EFEAF5F1DC4FF580033599AD79B525E7F0E8607695509225D395CE428EAB11833BD2C661E309F692BF77067E16586A0FDD4117E0352BE4B5DF18AD4596FEF785E888F8CC01C629268654FCB3EAAF9810AB5DFC12AA29F16E030F84D6B399ED39C48B48F8F8E98AAAD1CE6925A411200EB33C12F179BFF9C2D05FEF00F0EACEBECC436722BEA06ECFD48778E149E7828E6FA858CF9EF14DD39170ECEB8DA8830C816A37ADD24CD093275AB0ABD29BD61BA99C27FFF53E252067BE91973F77D3B848463997E9017FFB1742D1354AA26645CDEA7F680A4B7D850E07C545941FC3D7D701544E101BF69ED575FC4F90B6980357F9DD63C3FBE3A821234358D1AAC36E83E458C4B1BA07EF5945D286944267C1A34E936EEBB4F9F10A[/zjnbjsq]
+';
+   end;  
+procedure TForm1.Button1Click(Sender: TObject);
+begin
+if GetipFangshi=True then
+ShowMessage('你的电脑是固定IP上网')
+else
+ShowMessage('你的电脑是动态IP上网');
+end;
+
+end.
+ 
